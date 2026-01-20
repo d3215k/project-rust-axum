@@ -5,7 +5,7 @@ mod layers;
 mod models;
 
 use crate::state::AppState;
-use axum::routing::{patch, post};
+use axum::routing::{patch, post, get};
 use axum::{middleware, Router};
 use sqlx::PgPool;
 use tower::ServiceBuilder;
@@ -31,6 +31,8 @@ async fn main() {
 
 
     let protected_routes = Router::new()
+        .route("/users", get(routes::user::list))
+        .route("/users/{id}", get(routes::user::show))
         .route("/tasks", post(routes::task::create).get(routes::task::list))
         .route("/tasks/{id}", patch(routes::task::update).delete(routes::task::delete).get(routes::task::show))
         .layer(middleware::from_fn(layers::auth::validate_token));
