@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct Task {
-    pub id: i32,
+    pub id: Uuid,
     pub title: String,
     pub completed: bool,
 }

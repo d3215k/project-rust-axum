@@ -9,8 +9,20 @@ pub enum AppError {
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
 
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
     #[error("Request not found: {0}")]
     NotFound(String),
+
+    #[error("Invalid login")]
+    InvalidLogin(String),
+
+    #[error("Invalid login token")]
+    InvalidToken(),
+
+    #[error("Internal server error")]
+    InternalServerError()
 }
 
 #[derive(Serialize)]
@@ -33,11 +45,49 @@ impl IntoResponse for AppError {
                 )
             },
             AppError::NotFound(msg) => {
-                (StatusCode::NOT_FOUND,
-                ErrorResponse {
-                    status: 404,
-                    message: format!("Resource not found: {}", msg)
-                })
+                (
+                    StatusCode::NOT_FOUND,
+                    ErrorResponse {
+                        status: 404,
+                        message: format!("Resource not found: {}", msg)
+                    }
+                )
+            },
+            AppError::InvalidLogin(_msg) => {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    ErrorResponse {
+                        status: 41,
+                        message: "Invalid login".to_owned(),
+                    }
+                )
+            },
+            AppError::InvalidToken() => {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    ErrorResponse {
+                        status: 42,
+                        message: "Invalid token".to_owned(),
+                    }
+                )
+            },
+            AppError::InternalServerError() => {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ErrorResponse {
+                        status: 50,
+                        message: "Internal server error".to_owned(),
+                    }
+                )
+            },
+            AppError::Conflict(msg) => {
+                (
+                    StatusCode::CONFLICT,
+                    ErrorResponse {
+                        status: 40,
+                        message: msg.clone(),
+                    },
+                )
             }
         };
 

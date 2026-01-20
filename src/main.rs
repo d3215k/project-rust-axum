@@ -25,15 +25,20 @@ async fn main() {
         db: db_pool,
     };
 
-    let app_layer = ServiceBuilder::new()
-        .layer(middleware::from_fn(layers::custom::middleware_satu))
-        .layer(middleware::from_fn(layers::custom::middleware_dua));
+    let public_routes = Router::new()
+        .route("/login", post(routes::auth::login))
+        .route("/register", post(routes::user::create));
+
+
+    let protected_routes = Router::new()
+        .route("/tasks", post(routes::task::create).get(routes::task::list))
+        .route("/tasks/{id}", patch(routes::task::update).delete(routes::task::delete).get(routes::task::show))
+        .layer(middleware::from_fn(layers::auth::validate_token));
 
     let app = Router::new()
-        .route("/tasks", post(routes::task::create).get(routes::task::list))
-        .route("/tasks/{id}", patch(routes::task::update).delete(routes::task::delete))
-        .with_state(app_state)
-        .layer(app_layer);
+        .merge(public_routes)
+        .merge(protected_routes)
+        .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
